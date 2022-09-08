@@ -1,6 +1,6 @@
 # account_this.
 
-## Accounting Motherfucker!
+## Accounting!
 
 ## Run:
 ```
@@ -10,5 +10,6 @@ or
 ``` 
 $ python single_entry.py 
 ```
+- Create multipule single_entry.csv accounts.
 - record single entry finacial transactions. (Date,Amount,Description)
 - store transactions in csv file for easy export.
