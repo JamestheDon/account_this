@@ -45,39 +45,37 @@ def all_account_names():
 all = all_account_names()
 
 # @TODO new account?
-def gen_acc_path(account):
+def gen_acc(account):
+    lc = 0
     for i in all:
         if i == account:
             print('Match', i)
             return f'data/{i}_single_entry.csv'
         if i != account:
-            print('No Match...\nCreating file now:')
-            #  set column values  with pandas.
-            df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
-            # write columns to csv.
-            df.to_csv(f'data/{account}_single_entry.csv', index=False)
-            return f'data/{account}_single_entry.csv'
-    
-
-   
+            lc += 1
+            if i == account:
+                print('found:', account)
+                gen_acc(account)
+            if len(all) == lc:
+                print('NO MATCH.\nCreating csv now...')
+                #  set column values  with pandas.
+                df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
+                # write columns to csv.
+                df.to_csv(f'data/{account}_single_entry.csv', index=False)
+                return f'data/{account}_single_entry.csv'
+"""""
 # create new account
 # database account file path 
-"""""
 def create_new(acc_name):
-        name = input('Account Name? ')
-        lc = 0
-        acc_path = []
-        for i in all_accounts:
-            if i == acc_name or i == name:
-                return f'./data/{i}_single_entry.csv'
-            lc =+ 1    
-            if i != acc_name:
-                print('Please select a account.') 
-                name = input('Account Name? ')
-                return select_acc(name)
+    print('No Match...\nCreating file now:')
+    #  set column values  with pandas.
+    df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
+    # write columns to csv.
+    df.to_csv(f'data/{account}_single_entry.csv', index=False)
+    return f'data/{account}_single_entry.csv'
 #                 
-"""""
-file = gen_acc_path(account)
+"""
+file = gen_acc(account)
 print('Selected Account --->', file)
 # Read csv into state
 db = pd.read_csv(file) 
