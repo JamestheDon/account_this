@@ -1,143 +1,98 @@
 #!/usr/bin/env python3
-# Fix Accounting.
-# Simple single entry cash accounting.
+# Simple single-entry cash accounting script.
+
 import os
-# import numpy.crypto
 import pandas as pd
 
-#print('Pandas version:', pd.__version__)
-# Init sequence
-# database path
-dbpath = r'./data'
-# list database items
-accounts = os.listdir(dbpath)
+DB_PATH = './data'
 
-if accounts != []:
-    account = input('Account name? -->')
-    
-## This tyipically will only run once, upon first use.                   
-if accounts == []: 
-    # Create first account.
-    account = input('Account name? -->')
-    #  set column values  with pandas.
-    df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
-    # write columns to csv.
-    df.to_csv(f'data/{account}_single_entry.csv', index=False)
-    # list database items
-    accounts = os.listdir(dbpath)
-""""
-Commenting out blocks.
-"""""
-def all_account_names():
-    lc = 0 
-    all = []
-    #entries = {'name': '', 'path': ''} # create dic for each accout?
-    for i in accounts:
-        if i == 0:
-            print('ooops!', i)
-        lc += 1
-        # items in list
-        acc_name = i.split('_')
-        all.append(acc_name[0])
-    print('finally: got all -->', lc, all)
-    return all
+# Ensure the data directory exists
+if not os.path.exists(DB_PATH):
+    os.makedirs(DB_PATH)
 
-all = all_account_names()
+# Function to get account names from existing CSV files
+def get_account_names():
+    account_files = os.listdir(DB_PATH)
+    accounts = []
+    for filename in account_files:
+        if filename.endswith('_single_entry.csv'):
+            account_name = filename.split('_single_entry.csv')[0]
+            accounts.append(account_name)
+    return accounts
 
-# @TODO new account?
-def gen_acc(account):
-    lc = 0
-    for i in all:
-        if i == account:
-            print('Match', i)
-            return f'data/{i}_single_entry.csv'
-        if i != account:
-            lc += 1
-            if i == account:
-                print('found:', account)
-                gen_acc(account)
-            if len(all) == lc:
-                print('NO MATCH.\nCreating csv now...')
-                #  set column values  with pandas.
-                df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
-                # write columns to csv.
-                df.to_csv(f'data/{account}_single_entry.csv', index=False)
-                return f'data/{account}_single_entry.csv'
-"""""
-# create new account
-# database account file path 
-def create_new(acc_name):
-    print('No Match...\nCreating file now:')
-    #  set column values  with pandas.
-    df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
-    # write columns to csv.
-    df.to_csv(f'data/{account}_single_entry.csv', index=False)
-    return f'data/{account}_single_entry.csv'
-#                 
-"""
-file = gen_acc(account)
-print('Selected Account --->', file)
-# Read csv into state
-db = pd.read_csv(file) 
-print('Database ready', db.shape)
-## ================================= ##
-# Check that the csv file exists.
-pathExists = os.path.exists(file)
-if pathExists == True:
-    print('CSV Ready:', pathExists)
-    db = pd.read_csv(file)
-    pass
+accounts = get_account_names()
+
+# Prompt user for account name
+if not accounts:
+    account = input('No accounts found. Please create a new account name: ')
 else:
-    # account name:
-    account = input('Account name? -->')
-# If file doesnt exist we must make one.
-#  set column values  with pandas.
-    df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
-    # write columns to csv.
-    df.to_csv(f'data/{account}_single_entry.csv', index=False)
-    # Read csv into state
-    db = pd.read_csv(file) 
-    print('Database ready')
+    account = input(f"Available accounts: {', '.join(accounts)}\nSelect account name or enter a new one: ")
 
-#####
+file_path = os.path.join(DB_PATH, f'{account}_single_entry.csv')
 
-#####
+# Check if the account exists; if not, offer to create it
+if account not in accounts:
+    create_new = input(f"Account '{account}' does not exist. Would you like to create it? (y/n): ").lower()
+    if create_new == 'y':
+        # Create new account with empty DataFrame
+        df = pd.DataFrame(columns=['Date', 'Amount', 'Description'])
+        df.to_csv(file_path, index=False)
+        print(f"Account '{account}' created.")
+    else:
+        print('Exiting program.')
+        exit()
 
-# continue prg
-print('**Columns**\n', db['Date'], db['Amount'], db['Description']) 
-# Check csv file entires.
-# shape at index [0] checks for rows.
-if db.shape[0] == 0:
-    print('ZeroSHape?',db.shape )
-if db.shape[0] > 0:
-    print('Entires ready:', db)
+# Read the account CSV file
+try:
+    db = pd.read_csv(file_path)
+except FileNotFoundError:
+    print(f"Error: The file {file_path} does not exist.")
+    exit()
 
-# user input questions.
-def qs(): 
-    # TODO add format hints.  
-    # %m/%d/%y
-    date_ = input('Date? --> ') 
-    amount_ = input('Amount? --> ')
-    desc_ = input('Description? --> ')
-    # TODO input formatting.
-    # set answers data to tx2
-    tx = [date_] + [amount_] + [desc_]
-    return tx
+# Display existing entries
+if db.empty:
+    print('No entries in the account.')
+else:
+    print('Existing entries:')
+    print(db)
 
-## most important code:
-def findLoc():
-    # TODO Find locations for saving: save by date.
-    return
+# Function to get new transaction input with validation
+def get_transaction_input():
+    while True:
+        date_ = input('Date (YYYY-MM-DD): ')
+        try:
+            pd.to_datetime(date_)
+            break
+        except ValueError:
+            print('Invalid date format. Please enter in YYYY-MM-DD format.')
+    while True:
+        amount_ = input('Amount: ')
+        try:
+            amount_ = float(amount_)
+            break
+        except ValueError:
+            print('Invalid amount. Please enter a numeric value.')
+    desc_ = input('Description: ')
+    return {'Date': date_, 'Amount': amount_, 'Description': desc_}
 
-def editLoc():
-    # TODO Find entires for editing.
-    return
+# Get new transaction and append to DataFrame
+transaction = get_transaction_input()
+new_entry = pd.DataFrame([transaction], columns=['Date', 'Amount', 'Description'])
+new_entry['Date'] = pd.to_datetime(new_entry['Date'])
+new_entry['Amount'] = pd.to_numeric(new_entry['Amount'])
+new_entry['Description'] = new_entry['Description'].astype(str)
 
-print('Database rows:', db.shape[0])
-# sort index by date.
-index = db.shape[0] 
-db.loc[index] = qs()
+# Ensure db has the same dtypes as new_entry
+db['Date'] = pd.to_datetime(db['Date'])
+db['Amount'] = pd.to_numeric(db['Amount'])
+db['Description'] = db['Description'].astype(str)
 
-print('\n \n',db)
-db.to_csv(file, index=False)
-# Save to csv
+# Concatenate the DataFrames
+db = pd.concat([db, new_entry], ignore_index=True)
+
+# Convert 'Date' column to datetime and sort
+db.sort_values('Date', inplace=True)
+
+# Save the DataFrame back to CSV
+db.to_csv(file_path, index=False)
+print('Transaction saved successfully.')
