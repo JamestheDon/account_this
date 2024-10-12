@@ -1,3 +1,6 @@
 pandas
 rich
 questionary
+bcrypt
+cryptography
+Pillow
